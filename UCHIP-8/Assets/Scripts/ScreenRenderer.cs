@@ -5,36 +5,35 @@ namespace Chip8
 {
   public class ScreenRenderer : MonoBehaviour
   {
+    private const int Chip8ScreenResX = 64;
+    private const int Chip8ScreenResY = 32;
+
     public Texture ScreenTexture;
     public float x, y, width, height;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
+    private int _renderWidthInPx, _renderHeightInPx, _renderOffsetXInPx, _renderOffsetYInPx, _lastScreenWidth, _lastScreenHeight;
 
     // Update is called once per frame
     void Update()
     {
+      // recalculate render coordinates if application window size changed
+      if (_lastScreenWidth != Screen.width || _lastScreenHeight != Screen.height)
+      {
+        RecalculateTextureDrawCoordinates();
+      }
+
+      _lastScreenWidth = Screen.width;
+      _lastScreenHeight = Screen.height;
     }
-
-
-
-
     private void OnPostRender()
     {
       GL.PushMatrix();
-      GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0);
+      GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0); //create "pixel perfect" matrix
 
       Graphics.DrawTexture(
-        new Rect(x, y, Screen.width, Screen.height), //todo replace with correct coordinates depending on aspect ration, resolution etc
+        new Rect(_renderOffsetXInPx, _renderOffsetYInPx, _renderWidthInPx, _renderHeightInPx),
         ScreenTexture);
       GL.PopMatrix();
-    }
-
-    private bool ResolutionChanged()
-    {
-      throw new NotImplementedException();
     }
 
     /// <summary>
@@ -42,8 +41,22 @@ namespace Chip8
     /// </summary>
     private void RecalculateTextureDrawCoordinates()
     {
-      //todo find nearest multiple of 64x32 for screen resolution and calculate exact values for drawing screen (texture)
-      throw new NotImplementedException();
+      //find nearest multiple of 64x32 for screen resolution and calculate exact values for drawing chip 8 screen (texture) centered and in the biggest possible format without any stretching
+      if (Screen.width >= 2 * Screen.height)
+      {
+        //height will be maxed, width adjusted accordingly
+        _renderHeightInPx = Screen.height - (Screen.height % Chip8ScreenResY);
+        _renderWidthInPx = _renderHeightInPx * 2;
+      }
+      else
+      {
+        //width will be maxed, height adjusted accordingly
+        _renderWidthInPx = Screen.width - (Screen.width % Chip8ScreenResX);
+        _renderHeightInPx = _renderWidthInPx / 2;
+      }
+
+      _renderOffsetXInPx = (Screen.width - _renderWidthInPx) / 2;
+      _renderOffsetYInPx = (Screen.height - _renderHeightInPx) / 2;
     }
   }
 }
