@@ -1,15 +1,10 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Chip8
 {
   public class ScreenRenderer : MonoBehaviour
   {
-    private const int Chip8ScreenResX = 64;
-    private const int Chip8ScreenResY = 32;
-
     public Texture ScreenTexture;
-    public float x, y, width, height;
 
     private int _renderWidthInPx, _renderHeightInPx, _renderOffsetXInPx, _renderOffsetYInPx, _lastScreenWidth, _lastScreenHeight;
 
@@ -45,13 +40,13 @@ namespace Chip8
       if (Screen.width >= 2 * Screen.height)
       {
         //height will be maxed, width adjusted accordingly
-        _renderHeightInPx = Screen.height - (Screen.height % Chip8ScreenResY);
+        _renderHeightInPx = Screen.height - (Screen.height % Chip8Constants.ScreenResY);
         _renderWidthInPx = _renderHeightInPx * 2;
       }
       else
       {
         //width will be maxed, height adjusted accordingly
-        _renderWidthInPx = Screen.width - (Screen.width % Chip8ScreenResX);
+        _renderWidthInPx = Screen.width - (Screen.width % Chip8Constants.ScreenResX);
         _renderHeightInPx = _renderWidthInPx / 2;
       }
 
