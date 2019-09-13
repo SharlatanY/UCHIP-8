@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ namespace Chip8
 
     //Misc
     private static float _clock = 500;
+    private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
     private void Start()
     {
@@ -38,12 +40,20 @@ namespace Chip8
 
     private void InitializeRAM()
     {
+      ClearRAM();
+      WriteFontIntoRAM(FontStartingAddress);
+      WriteROMIntoRAM(pcStartingAddress);
+    }
+
+    /// <summary>
+    /// Sets every byte in RAM to 0
+    /// </summary>
+    private void ClearRAM()
+    {
       for (var i = 0; i < RAM.Length; i++)
       {
         RAM[i] = 0x0;
       }
-
-      WriteFontIntoRAM(FontStartingAddress);
     }
 
     /// <summary>
@@ -52,9 +62,17 @@ namespace Chip8
     /// <param name="startingAddress">Address at which first byte will be written</param>
     private void WriteFontIntoRAM(ushort startingAddress)
     {
-      Array.Copy(Chip8Constants.Font, 0, RAM, (int)startingAddress, Chip8Constants.Font.Length );
+      Array.Copy(Chip8Constants.Font, 0, RAM, startingAddress, Chip8Constants.Font.Length );
     }
 
-
+    /// <summary>
+    /// Reads ROM from disk and loads it into the RAM
+    /// </summary>
+    /// <param name="startingAddress">Address at which first byte will be written</param>
+    private void WriteROMIntoRAM(ushort startingAddress)
+    {
+      var binary = File.ReadAllBytes(ROMPath);
+      Array.Copy(binary, 0, RAM, startingAddress, binary.Length);
+    }
   }
 }
