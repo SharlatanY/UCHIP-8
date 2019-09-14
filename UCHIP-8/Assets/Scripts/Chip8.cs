@@ -10,30 +10,59 @@ namespace Chip8
     public Texture OutputTexture; //Texture the chip 8 emulator will render to
 
     //Registers
-    private static readonly byte[] V = new byte[16];
-    private static ushort I; //memory address register
+    private readonly byte[] V = new byte[16];
+    private ushort I; //memory address register
 
     //RAM
-    private static readonly byte[] RAM = new byte[4096]; //0x0 to 0xFFF
+    private readonly byte[] RAM = new byte[4096]; //0x0 to 0xFFF
     private const ushort FontStartingAddress = 0x0;
 
     //Program counter
-    private static ushort pcStartingAddress = 0x200;
-    private static ushort PC = pcStartingAddress; //stores current execution address
+    private ushort _pcStartingAddress = 0x200;
+    private ushort PC; //stores current execution address
+
+    //Tick/CPU speed
+    private float _clockInHz = 500;
+    private float _tickIntervalInS;
+    /// <summary>
+    /// Time reminder from last update call that wasn't enough for a "full tick".
+    /// Example: Tick time is 3ms and between two Update() calls, 7ms pass.
+    /// Two ticks will be execute (2x3ms =6ms) and the reminder will be 1ms (7ms-6ms).
+    /// 5ms pass until the next Update() call but we'll now also add the reminder (5ms + 1ms from reminder)
+    /// -> passed time is 6ms, two ticks are executed.
+    /// This way, we get more consistent speed
+    /// </summary>
+    private float _tickReminder;
 
     //Misc
-    private static float _clock = 500;
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
     private void Start()
     {
-      InitializeRAM();
+      Reset();
+    }
+
+    private void Update()
+    {
+      //calculate how many ticks to execute
+      var passedTime = Time.deltaTime + _tickReminder;
+      var numTicksToExecute = (int)(passedTime / _tickIntervalInS);
+      _tickReminder = passedTime % _tickIntervalInS;
+
+      //execute instructions
+      for (var i = 0; i < numTicksToExecute; i++)
+      {
+        ExecuteTick();
+      }
     }
 
     private void Reset()
     {
       InitializeRAM();
-      PC = pcStartingAddress;
+      PC = _pcStartingAddress;
+
+      _tickIntervalInS = 1 / _clockInHz;
+      _tickReminder = 0;
 
       //todo add other stuff to be reset as development progresses
     }
@@ -42,7 +71,7 @@ namespace Chip8
     {
       ClearRAM();
       WriteFontIntoRAM(FontStartingAddress);
-      WriteROMIntoRAM(pcStartingAddress);
+      WriteROMIntoRAM(_pcStartingAddress);
     }
 
     /// <summary>
@@ -73,6 +102,14 @@ namespace Chip8
     {
       var binary = File.ReadAllBytes(ROMPath);
       Array.Copy(binary, 0, RAM, startingAddress, binary.Length);
+    }
+
+    /// <summary>
+    /// Executes one CPU tick/clock cycle
+    /// </summary>
+    private void ExecuteTick()
+    {
+      throw new NotImplementedException();
     }
   }
 }
