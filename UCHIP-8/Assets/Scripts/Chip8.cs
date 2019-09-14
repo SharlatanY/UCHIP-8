@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace Chip8
@@ -125,7 +124,8 @@ namespace Chip8
       // read instruction
       var leftByte = RAM[PC];
       var rightByte = RAM[PC + 1];
-      var opCode = (ushort)(leftByte << 8 | rightByte);
+      //var uShortOpCode = (ushort)(leftByte << 8 | rightByte);
+      var opCode = new OpCode(leftByte, rightByte);
 
       // move program counter to next instruction to be executed on next tick (might be overriden if instruction turns out to be a jump or function call)
       PC += 2; //Instructions are two bytes long, so we need to move two bytes go get to the next instruction
