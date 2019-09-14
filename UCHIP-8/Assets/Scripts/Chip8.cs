@@ -41,8 +41,7 @@ namespace Chip8
 
     private void Start()
     {
-      var pixels = OutputTexture.GetPixels();
-      _outputTextureResetColorArray = new Color[pixels.Length];
+      _outputTextureResetColorArray = new Color[OutputTexture.width * OutputTexture.height];
       for(var i = 0; i < _outputTextureResetColorArray.Length; i++)
       {
         _outputTextureResetColorArray[i] = Color.black;
