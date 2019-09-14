@@ -7,7 +7,7 @@ namespace Chip8
 {
   public class Chip8 : MonoBehaviour
   {
-    public Texture OutputTexture; //Texture the chip 8 emulator will render to
+    public Texture2D OutputTexture; //Texture the chip 8 emulator will render to
 
     //Registers
     private readonly byte[] V = new byte[16];
@@ -37,8 +37,17 @@ namespace Chip8
     //Misc
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
+    private Color[] _outputTextureResetColorArray; 
+
     private void Start()
     {
+      var pixels = OutputTexture.GetPixels();
+      _outputTextureResetColorArray = new Color[pixels.Length];
+      for(var i = 0; i < _outputTextureResetColorArray.Length; i++)
+      {
+        _outputTextureResetColorArray[i] = Color.black;
+      }
+
       Reset();
     }
 
@@ -54,6 +63,11 @@ namespace Chip8
       {
         ExecuteTick();
       }
+    }
+
+    private void OnDisable()
+    {
+      ClearScreen();
     }
 
     private void Reset()
@@ -109,7 +123,18 @@ namespace Chip8
     /// </summary>
     private void ExecuteTick()
     {
+      //OutputTexture.SetPixel(0, 0, Color.white);
+      //OutputTexture.Apply();
       throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Paints the whole screen texture black
+    /// </summary>
+    private void ClearScreen()
+    {
+      OutputTexture.SetPixels(_outputTextureResetColorArray);
+      OutputTexture.Apply();
     }
   }
 }
