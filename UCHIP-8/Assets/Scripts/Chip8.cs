@@ -123,6 +123,16 @@ namespace Chip8
     /// </summary>
     private void ExecuteTick()
     {
+      // read instruction
+      var leftByte = RAM[PC];
+      var rightByte = RAM[PC + 1];
+      var opCode = (ushort)(leftByte << 8 | rightByte);
+
+      // move program counter to next instruction to be executed on next tick (might be overriden if instruction turns out to be a jump or function call)
+      PC += 2; //Instructions are two bytes long, so we need to move two bytes go get to the next instruction
+
+      //todo execute instruction
+
       //OutputTexture.SetPixel(0, 0, Color.white);
       //OutputTexture.Apply();
       throw new NotImplementedException();
