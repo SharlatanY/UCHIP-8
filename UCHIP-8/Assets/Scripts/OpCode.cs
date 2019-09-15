@@ -12,7 +12,7 @@ namespace Chip8
     /// <summary>
     /// First digit of the opcode in hexadecimal
     /// </summary>
-    public readonly char FirstDigitHex;
+    public readonly string FirstDigitHex;
 
     /// <summary>
     /// Expects the two bytes that make up the op code.
@@ -24,7 +24,7 @@ namespace Chip8
     {
       var bytes = new byte[] {leftByte, rightByte};
       Hex = BitConverter.ToString(bytes).Replace("-", string.Empty); ;
-      FirstDigitHex = Hex[0];
+      FirstDigitHex = Hex[0].ToString();
     }
   }
 }
