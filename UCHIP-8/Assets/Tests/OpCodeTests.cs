@@ -17,5 +17,12 @@ namespace Tests
           var opCode = new OpCode(0xb5, 0x24);
           Assert.AreEqual("B", opCode.FirstDigitHex);
         }
+
+        [Test]
+        public void NNN_Ok()
+        {
+          var opCode = new OpCode(0x1C, 0x24);
+          Assert.AreEqual(3108, opCode.NNN);
+        }
     }
 }

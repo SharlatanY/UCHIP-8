@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 namespace Chip8
@@ -36,12 +37,12 @@ namespace Chip8
     //Misc
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
-    private Color[] _outputTextureResetColorArray; 
+    private Color[] _outputTextureResetColorArray;
 
     private void Start()
     {
       _outputTextureResetColorArray = new Color[OutputTexture.width * OutputTexture.height];
-      for(var i = 0; i < _outputTextureResetColorArray.Length; i++)
+      for (var i = 0; i < _outputTextureResetColorArray.Length; i++)
       {
         _outputTextureResetColorArray[i] = Color.black;
       }
@@ -103,7 +104,7 @@ namespace Chip8
     /// <param name="startingAddress">Address at which first byte will be written</param>
     private void WriteFontIntoRAM(ushort startingAddress)
     {
-      Array.Copy(Chip8Constants.Font, 0, RAM, startingAddress, Chip8Constants.Font.Length );
+      Array.Copy(Chip8Constants.Font, 0, RAM, startingAddress, Chip8Constants.Font.Length);
     }
 
     /// <summary>
@@ -130,11 +131,42 @@ namespace Chip8
       // move program counter to next instruction to be executed on next tick (might be overriden if instruction turns out to be a jump or function call)
       PC += 2; //Instructions are two bytes long, so we need to move two bytes go get to the next instruction
 
-      //todo execute instruction
+      // execute instruction
+      ExecuteOpCode(opCode);
 
       //OutputTexture.SetPixel(0, 0, Color.white);
       //OutputTexture.Apply();
-      throw new NotImplementedException();
+      //throw new NotImplementedException();
+    }
+
+    private void ExecuteOpCode(OpCode opCode)
+    {
+      var opCodeInvalid = false;
+      switch (opCode.FirstDigitHex)
+      {
+        case "0":
+          switch (opCode.Hex)
+          {
+            case "00E0":
+              ClearScreen();
+              break;
+            default:
+              opCodeInvalid = true;
+              break;
+          }
+          break;
+        case "1":
+          JumpToAddress(opCode.NNN);
+          break;
+        default:
+          opCodeInvalid = true;
+          break;
+      }
+
+      if (opCodeInvalid)
+      {
+        throw new ArgumentException($"Invalid OpCode: '{opCode.Hex}'", nameof(opCode));
+      }
     }
 
     /// <summary>
@@ -144,6 +176,15 @@ namespace Chip8
     {
       OutputTexture.SetPixels(_outputTextureResetColorArray);
       OutputTexture.Apply();
+    }
+
+    /// <summary>
+    /// Sets the program counter to a specific address in the memory
+    /// </summary>
+    /// <param name="address"></param>
+    private void JumpToAddress(ushort address)
+    {
+      PC = address;
     }
   }
 }
