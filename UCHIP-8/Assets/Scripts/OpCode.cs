@@ -15,9 +15,14 @@ namespace Chip8
     public readonly string FirstDigitHex;
 
     /// <summary>
-    /// The last three bytes of the opcode as ushort.
+    /// The last three nibbles/hex characters of the opcode as ushort.
     /// </summary>
     public readonly ushort NNN;
+
+    /// <summary>
+    /// The last byte/two hex characters of the opp code as byte.
+    /// </summary>
+    public readonly byte NN;
 
     /// <summary>
     /// Expects the two bytes that make up the op code.
@@ -31,6 +36,7 @@ namespace Chip8
       Hex = BitConverter.ToString(bytes).Replace("-", string.Empty); ;
       FirstDigitHex = Hex[0].ToString();
       NNN = Convert.ToUInt16($"0x{Hex.Substring(1)}",16);
+      NN = Convert.ToByte($"0x{Hex.Substring(2)}", 16);
     }
   }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -35,6 +36,7 @@ namespace Chip8
     private float _tickReminder;
 
     //Misc
+    private readonly Stack<ushort> _stack = new Stack<ushort>();
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
     private Color[] _outputTextureResetColorArray;
@@ -76,6 +78,8 @@ namespace Chip8
 
       _tickIntervalInS = 1 / _clockInHz;
       _tickReminder = 0;
+
+      _stack.Clear();
 
       //todo add other stuff to be reset as development progresses
     }
@@ -150,6 +154,9 @@ namespace Chip8
             case "00E0":
               ClearScreen();
               break;
+            case "00EE":
+              ReturnFromSubroutine();
+              break;
             default:
               opCodeInvalid = true;
               break;
@@ -157,6 +164,9 @@ namespace Chip8
           break;
         case "1":
           JumpToAddress(opCode.NNN);
+          break;
+        case "2":
+          CallSubroutine(opCode.NNN);
           break;
         default:
           opCodeInvalid = true;
@@ -185,6 +195,24 @@ namespace Chip8
     private void JumpToAddress(ushort address)
     {
       PC = address;
+    }
+
+    /// <summary>
+    /// Jumps to the start of a subroutine
+    /// </summary>
+    /// <param name="address"></param>
+    private void CallSubroutine(ushort address)
+    {
+      _stack.Push(PC);
+      PC = address;
+    }
+
+    /// <summary>
+    /// Returns from the current subroutine and sets the PC to the next instruction after the initial call of the subroutine
+    /// </summary>
+    private void ReturnFromSubroutine()
+    {
+      PC = (ushort) (_stack.Pop() + 2); // +2 because the PC needs to be set to the next instruction after the original call to the subroutine. Else, the subroutine would be called again in the next tick.
     }
   }
 }
