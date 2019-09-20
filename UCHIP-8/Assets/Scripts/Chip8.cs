@@ -206,6 +206,12 @@ namespace Chip8
             case "4":
               AddRegToOtherRegWithCarry(opCode.X, opCode.Y);
               break;
+            case "5:":
+              SubtractRegFromOtherRegWithBorrow(opCode.X, opCode.Y);
+              break;
+            case "6":
+              OC8XY6(opCode.X, opCode.Y);
+              break;
             default:
               opCodeInvalid = true;
               break;
@@ -361,6 +367,29 @@ namespace Chip8
     {
       V[0xf] = (byte) (V[indexX] + V[indexY] > 0xff ? 1 : 0);
       V[indexX] += V[indexY];
+    }
+
+    /// <summary>
+    /// Subtracts value of register V[y] to register V[x] and uses V[0xF] to store the borrow flag (0 if underflow occured, else 1)
+    /// </summary>
+    /// <param name="indexX"></param>
+    /// <param name="indexY"></param>
+    private void SubtractRegFromOtherRegWithBorrow(uint indexX, uint indexY)
+    {
+      V[0xf] = (byte) (V[indexX] > V[indexY] ? 1 : 0);
+      V[indexX] -= V[indexY];
+    }
+
+    /// <summary>
+    /// Store the value of register VY shifted right one bit in register VX
+    /// Set register V[0xF] to the least significant bit prior to the shift.
+    /// ATTENTION: There are different implementations for this method(https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)!
+    /// Using the one suggested by wikipedia and "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)
+    /// </summary>
+    private void OC8XY6(uint indexX, uint indexY)
+    {
+      V[0xf] = (byte)(V[indexY] & 0x1);
+      V[indexX] = (byte) (V[indexY] >> 1);
     }
   }
 }
