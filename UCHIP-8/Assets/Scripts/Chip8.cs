@@ -384,7 +384,7 @@ namespace Chip8
     /// Store the value of register VY shifted right one bit in register VX
     /// Set register V[0xF] to the least significant bit prior to the shift.
     /// ATTENTION: There are different implementations for this method(https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)!
-    /// Using the one suggested by wikipedia and "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)
+    /// Using the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)
     /// </summary>
     private void OC8XY6(uint indexX, uint indexY)
     {
