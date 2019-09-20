@@ -75,6 +75,7 @@ namespace Chip8
     {
       InitializeRAM();
       PC = _pcStartingAddress;
+      I = 0x0;
 
       _tickIntervalInS = 1 / _clockInHz;
       _tickReminder = 0;
@@ -183,6 +184,34 @@ namespace Chip8
         case "6":
           SetRegVal(opCode.X, opCode.NN);
           break;
+        case "7":
+          AddValToReg(opCode.X, opCode.NN);
+          break;
+        case "8":
+          #region handle case 8
+          switch (opCode.LastDigitHex)
+          {
+            case "0":
+              CopyRegVal(opCode.X, opCode.Y);
+              break;
+            case "1":
+              SetVxToVxOrVy(opCode.X, opCode.Y);
+              break;
+            case "2":
+              SetVxToVxAndVy(opCode.X, opCode.Y);
+              break;
+            case "3":
+              SetVxToVxXorVy(opCode.X, opCode.Y);
+              break;
+            case "4":
+              AddRegToOtherRegWithCarry(opCode.X, opCode.Y);
+              break;
+            default:
+              opCodeInvalid = true;
+              break;
+          }
+          break;
+          #endregion
         default:
           opCodeInvalid = true;
           break;
@@ -190,7 +219,7 @@ namespace Chip8
 
       if (opCodeInvalid)
       {
-        throw new ArgumentException($"Invalid OpCode: '{opCode.Hex}'", nameof(opCode));
+        throw new ArgumentException($"Invalid OpCode: '{opCode.Hex}' at address {PC-2}", nameof(opCode)); //need to reduce PC by two to get actual address because PC was already directly set to address that will have to be read next
       }
     }
 
@@ -271,6 +300,67 @@ namespace Chip8
     private void SetRegVal(uint registerIndex, byte value)
     {
       V[registerIndex] = value;
+    }
+
+    /// <summary>
+    /// Adds a value to the value that's already stored in a register.
+    /// Overflows will wrap around.
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    /// <param name="value"></param>
+    private void AddValToReg(uint registerIndex, byte value)
+    {
+      V[registerIndex] += value; // potential overflow intended
+    }
+
+    /// <summary>
+    /// Sets the value of a register to that of another register.
+    /// </summary>
+    /// <param name="targetRegIndex">Register to copy value to.</param>
+    /// <param name="sourceRegIndex">Register to copy value from.</param>
+    private void CopyRegVal(uint targetRegIndex, uint sourceRegIndex)
+    {
+      V[targetRegIndex] = V[sourceRegIndex];
+    }
+
+    /// <summary>
+    /// Register value V[x] is set to result of bitwise OR of V[x] and V[y]
+    /// </summary>
+    /// <param name="indexX">Index V[x]</param>
+    /// <param name="indexY">Index V[y]</param>
+    private void SetVxToVxOrVy(uint indexX, uint indexY)
+    {
+      V[indexX] = (byte) (V[indexX] | V[indexY]);
+    }
+
+    /// <summary>
+    /// Register value V[x] is set to result of bitwise AND of V[x] and V[y]
+    /// </summary>
+    /// <param name="indexX">Index V[x]</param>
+    /// <param name="indexY">Index V[y]</param>
+    private void SetVxToVxAndVy(uint indexX, uint indexY)
+    {
+      V[indexX] = (byte) (V[indexX] & V[indexY]);
+    }
+    /// <summary>
+    /// Register value V[x] is set to result of bitwise XOR of V[x] and V[y]
+    /// </summary>
+    /// <param name="indexX">Index V[x]</param>
+    /// <param name="indexY">Index V[y]</param>
+    private void SetVxToVxXorVy(uint indexX, uint indexY)
+    {
+      V[indexX] = (byte) (V[indexX] ^ V[indexY]);
+    }
+
+    /// <summary>
+    /// Adds value of register V[y] to register V[x] and uses V[0xF] to store the carry flag (1 if overflow occured, else 0)
+    /// </summary>
+    /// <param name="indexX"></param>
+    /// <param name="indexY"></param>
+    private void AddRegToOtherRegWithCarry(uint indexX, uint indexY)
+    {
+      V[0xf] = (byte) (V[indexX] + V[indexY] > 0xff ? 1 : 0);
+      V[indexX] += V[indexY];
     }
   }
 }
