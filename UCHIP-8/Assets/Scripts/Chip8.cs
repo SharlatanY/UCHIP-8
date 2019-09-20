@@ -168,6 +168,21 @@ namespace Chip8
         case "2":
           CallSubroutine(opCode.NNN);
           break;
+        case "3":
+          SkipNextInstructionIfValEqualWithRegVal(opCode.X, opCode.NN);
+          break;
+        case "4":
+          SkipNextInstructionIfValNotEqualWithRegVal(opCode.X, opCode.NN);
+          break;
+        case "5":
+          if (opCode.LastDigitHex == "0")
+            SkipNextInstructionIfRegValEqualWithOtherRegVal(opCode.X, opCode.Y);
+          else
+            opCodeInvalid = true;
+          break;
+        case "6":
+          SetRegVal(opCode.X, opCode.NN);
+          break;
         default:
           opCodeInvalid = true;
           break;
@@ -212,7 +227,50 @@ namespace Chip8
     /// </summary>
     private void ReturnFromSubroutine()
     {
-      PC = (ushort) (_stack.Pop() + 2); // +2 because the PC needs to be set to the next instruction after the original call to the subroutine. Else, the subroutine would be called again in the next tick.
+      PC = (ushort)(_stack.Pop() + 2); // +2 because the PC needs to be set to the next instruction after the original call to the subroutine. Else, the subroutine would be called again in the next tick.
+    }
+
+    /// <summary>
+    /// Skips the next instruction if the value provided is equal to the value stored in a register.
+    /// </summary>
+    /// <param name="registerIndex">Index of register to compare the value to.</param>
+    /// <param name="value">Value to compare with value in register</param>
+    private void SkipNextInstructionIfValEqualWithRegVal(uint registerIndex, byte value)
+    {
+      if (V[registerIndex] == value)
+        PC += 2;
+    }
+
+    /// <summary>
+    /// Skips the next instruction if the value provided is NOT equal to the value stored in a register.
+    /// </summary>
+    /// <param name="registerIndex">Index of register to compare the value to.</param>
+    /// <param name="value">Value to compare with value in register</param>
+    private void SkipNextInstructionIfValNotEqualWithRegVal(uint registerIndex, byte value)
+    {
+      if (V[registerIndex] != value)
+        PC += 2;
+    }
+
+    /// <summary>
+    /// Skips the next instruction if the values of two specific registers are the same.
+    /// </summary>
+    /// <param name="registerIndex1">Index of first register to compare.</param>
+    /// <param name="registerIndex2">Index of second register to compare.</param>
+    private void SkipNextInstructionIfRegValEqualWithOtherRegVal(uint registerIndex1, uint registerIndex2)
+    {
+      if (V[registerIndex1] == V[registerIndex2])
+        PC += 2;
+    }
+
+    /// <summary>
+    /// Sets the value of a register
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    /// <param name="value"></param>
+    private void SetRegVal(uint registerIndex, byte value)
+    {
+      V[registerIndex] = value;
     }
   }
 }

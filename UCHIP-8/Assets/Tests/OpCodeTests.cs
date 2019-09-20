@@ -19,6 +19,13 @@ namespace Tests
     }
 
     [Test]
+    public void LastDigitHex_Ok()
+    {
+      var opCode = new OpCode(0xb5, 0x24);
+      Assert.AreEqual("4", opCode.LastDigitHex);
+    }
+
+    [Test]
     public void NNN_Ok()
     {
       var opCode = new OpCode(0x1C, 0x24);
@@ -30,6 +37,20 @@ namespace Tests
     {
       var opCode = new OpCode(0x33, 0x24);
       Assert.AreEqual(0x24, opCode.NN);
+    }
+
+    [Test]
+    public void X_Ok()
+    {
+      var opCode = new OpCode(0x3C, 0x24);
+      Assert.AreEqual(12, opCode.X);
+    }
+
+    [Test]
+    public void Y_Ok()
+    {
+      var opCode = new OpCode(0x3C, 0xD4);
+      Assert.AreEqual(13, opCode.Y);
     }
   }
 }
