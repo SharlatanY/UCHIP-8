@@ -215,7 +215,7 @@ namespace Chip8
             case "7":
               SetVxToVyMinusVxWithBorrow(opCode.X, opCode.Y);
               break;
-            case "8":
+            case "E":
               OC8XYE(opCode.X, opCode.Y);
               break;
             default:
