@@ -207,10 +207,16 @@ namespace Chip8
               AddRegToOtherRegWithCarry(opCode.X, opCode.Y);
               break;
             case "5:":
-              SubtractRegFromOtherRegWithBorrow(opCode.X, opCode.Y);
+              SetVxToVxMinusVyWithBorrow(opCode.X, opCode.Y);
               break;
             case "6":
               OC8XY6(opCode.X, opCode.Y);
+              break;
+            case "7":
+              SetVxToVyMinusVxWithBorrow(opCode.X, opCode.Y);
+              break;
+            case "8":
+              OC8XYE(opCode.X, opCode.Y);
               break;
             default:
               opCodeInvalid = true;
@@ -218,6 +224,12 @@ namespace Chip8
           }
           break;
           #endregion
+        case "9":
+          if (opCode.LastDigitHex == "0")
+            SkipNextInstructionIfRegValNotEqualWithOtherRegVal(opCode.X, opCode.Y);
+          else
+            opCodeInvalid = true;
+          break;
         default:
           opCodeInvalid = true;
           break;
@@ -288,7 +300,7 @@ namespace Chip8
     }
 
     /// <summary>
-    /// Skips the next instruction if the values of two specific registers are the same.
+    /// Skips the next instruction if the values of two specific registers are equal.
     /// </summary>
     /// <param name="registerIndex1">Index of first register to compare.</param>
     /// <param name="registerIndex2">Index of second register to compare.</param>
@@ -370,11 +382,11 @@ namespace Chip8
     }
 
     /// <summary>
-    /// Subtracts value of register V[y] to register V[x] and uses V[0xF] to store the borrow flag (0 if underflow occured, else 1)
+    /// Sets "V[x] -= V[y]" and uses V[0xF] to store the borrow flag (0 if underflow occured, else 1)
     /// </summary>
     /// <param name="indexX"></param>
     /// <param name="indexY"></param>
-    private void SubtractRegFromOtherRegWithBorrow(uint indexX, uint indexY)
+    private void SetVxToVxMinusVyWithBorrow(uint indexX, uint indexY)
     {
       V[0xf] = (byte) (V[indexX] > V[indexY] ? 1 : 0);
       V[indexX] -= V[indexY];
@@ -383,14 +395,49 @@ namespace Chip8
     /// <summary>
     /// Store the value of register VY shifted right one bit in register VX
     /// Set register V[0xF] to the least significant bit prior to the shift.
-    /// ATTENTION: There are different implementations for this method(https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)!
-    /// Using the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)
-    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussion here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/
+    /// ATTENTION: There are different implementations for this method.
+    /// Using my interpretation (the description there is ambiguous itself) of the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)!
+    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
     /// </summary>
     private void OC8XY6(uint indexX, uint indexY)
     {
       V[0xf] = (byte)(V[indexY] & 0x1);
       V[indexX] = (byte) (V[indexY] >> 1);
+    }
+
+    /// <summary>
+    /// Sets "V[x] = V[y] - V[x]"and uses V[0xF] to store the borrow flag (0 if underflow occured, else 1)
+    /// </summary>
+    /// <param name="indexX"></param>
+    /// <param name="indexY"></param>
+    private void SetVxToVyMinusVxWithBorrow(uint indexX, uint indexY)
+    {
+      V[0xf] = (byte)(V[indexY] > V[indexX] ? 1 : 0);
+      V[indexX] = (byte)(V[indexY] - V[indexX]);
+    }
+
+    /// <summary>
+    /// Store the value of register VY shifted left one bit in register VX
+    /// Set register V[0xF] to the most significant bit prior to the shift.
+    /// ATTENTION: There are different implementations for this method, just like with 8XY6.
+    /// Using my interpretation (the description there is ambiguous itself) of the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)!
+    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
+    /// </summary>
+    private void OC8XYE(uint indexX, uint indexY)
+    {
+      V[0xf] = (byte)(V[indexY] & 0x80);
+      V[indexX] = (byte)(V[indexY] << 1);
+    }
+
+    /// <summary>
+    /// Skips the next instruction if the values of two specific registers are NOT equal.
+    /// </summary>
+    /// <param name="registerIndex1">Index of first register to compare.</param>
+    /// <param name="registerIndex2">Index of second register to compare.</param>
+    private void SkipNextInstructionIfRegValNotEqualWithOtherRegVal(uint registerIndex1, uint registerIndex2)
+    {
+      if (V[registerIndex1] != V[registerIndex2])
+        PC += 2;
     }
   }
 }
