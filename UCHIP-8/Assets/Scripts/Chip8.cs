@@ -206,7 +206,7 @@ namespace Chip8
             case "4":
               AddRegToOtherRegWithCarry(opCode.X, opCode.Y);
               break;
-            case "5:":
+            case "5":
               SetVxToVxMinusVyWithBorrow(opCode.X, opCode.Y);
               break;
             case "6":
