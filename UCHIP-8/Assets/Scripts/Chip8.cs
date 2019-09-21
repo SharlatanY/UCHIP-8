@@ -385,6 +385,7 @@ namespace Chip8
     /// Set register V[0xF] to the least significant bit prior to the shift.
     /// ATTENTION: There are different implementations for this method(https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)!
     /// Using the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)
+    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussion here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/
     /// </summary>
     private void OC8XY6(uint indexX, uint indexY)
     {
