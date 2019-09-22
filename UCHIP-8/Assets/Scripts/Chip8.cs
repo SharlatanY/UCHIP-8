@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -40,11 +41,15 @@ namespace Chip8
     private readonly Stack<ushort> _stack = new Stack<ushort>();
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
+    private int _screenWidth, _screenHeight;
+
     private Color[] _outputTextureResetColorArray;
 
     private void Start()
     {
-      _outputTextureResetColorArray = new Color[OutputTexture.width * OutputTexture.height];
+      _screenWidth = OutputTexture.width;
+      _screenHeight = OutputTexture.height;
+      _outputTextureResetColorArray = new Color[_screenWidth * _screenHeight];
       for (var i = 0; i < _outputTextureResetColorArray.Length; i++)
       {
         _outputTextureResetColorArray[i] = Color.black;
@@ -239,6 +244,9 @@ namespace Chip8
           break;
         case "C":
           OCCXNN(opCode.X, opCode.NN);
+          break;
+        case "D":
+          DrawSprite(opCode.X, opCode.Y, opCode.N);
           break;
         default:
           opCodeInvalid = true;
@@ -472,9 +480,55 @@ namespace Chip8
     /// Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN. 
     /// </summary>
     /// <param name=""></param>
-    public void OCCXNN(uint registerIndex, byte nn)
+    private void OCCXNN(uint registerIndex, byte nn)
     {
       V[registerIndex] = (byte) (_random.Next(16) & nn);
+    }
+
+    /// <summary>
+    /// Draws a sprite at coordinate (V[x], V[y]) that has a width of 8 pixels and a height of n pixels.
+    /// To get the sprite rows, n bytes of data are read starting from memory address stored in register I;
+    /// If any set pixels are unset by this operation, V[F] is set to 1, else it will be set to 0.
+    /// If a sprite would draw one or more pixels outside the screen, they will be wrapped around (all coordinates
+    /// will be modified with "% _screenWidth" or "% _screenHeight" respectively.
+    /// </summary>
+    /// <param name="xUpperLeft"></param>
+    /// <param name="yUpperLeft"></param>
+    /// <param name="n"></param>
+    private void DrawSprite(uint xUpperLeft, uint yUpperLeft, byte n)
+    {
+      // this method is written very inefficiently and could use a lot of optimization
+      // since it's just a small side project/proof of concept, I'll leave it as is as
+      // to not invest time in something that isn't needed.
+
+      // handling of underflow not necessary because the data types and implementation ensure that we'll always only have values >= 0
+
+      // handle potential overflows for start drawing location
+      xUpperLeft %= (uint)_screenWidth;
+      yUpperLeft %= (uint) _screenHeight;
+
+      var pixelUnset = false;
+      var baseAddress = I;
+      for (var i = 0; i < n; i++)
+      {
+        var x = (int) xUpperLeft + i;
+        x %= _screenWidth; // handle overflow
+
+        var spriteLine = new BitArray( new[] {RAM[baseAddress + i]});
+        for (var j = 0; j < spriteLine.Length; j++)
+        {
+          var y = (int) yUpperLeft + j;
+          y %= _screenHeight; //handle overflow
+
+          var color = spriteLine[j] == true ? Color.white : Color.black;
+          OutputTexture.SetPixel(x, y, color);
+          
+
+          //todo set "unset"-flag when appropriate
+        }
+
+        OutputTexture.Apply();
+      }
     }
   }
 }

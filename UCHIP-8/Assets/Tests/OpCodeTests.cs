@@ -40,6 +40,13 @@ namespace Tests
     }
 
     [Test]
+    public void N_Ok()
+    {
+      var opCode = new OpCode(0xD3, 0xAC);
+      Assert.AreEqual(0xC, opCode.N);
+    }
+
+    [Test]
     public void X_Ok()
     {
       var opCode = new OpCode(0x3C, 0x24);

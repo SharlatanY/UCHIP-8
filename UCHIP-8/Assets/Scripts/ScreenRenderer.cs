@@ -23,7 +23,8 @@ namespace Chip8
     private void OnPostRender()
     {
       GL.PushMatrix();
-      GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0); //create "pixel perfect" matrix
+      //GL.LoadPixelMatrix(0, Screen.width, Screen.height, 0); //create "pixel perfect" matrix with 0/0 in lower left
+      GL.LoadPixelMatrix(0, Screen.width, 0, Screen.height); //create "pixel perfect" matrix with 0/0 in upper left, which is what CHIP-8 works with
 
       Graphics.DrawTexture(
         new Rect(_renderOffsetXInPx, _renderOffsetYInPx, _renderWidthInPx, _renderHeightInPx),

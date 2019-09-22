@@ -30,6 +30,11 @@ namespace Chip8
     public readonly byte NN;
 
     /// <summary>
+    /// The last nibble/hex characters of the opcode as byte (so, 4 most significant bits will always be 0).
+    /// </summary>
+    public readonly byte N;
+
+    /// <summary>
     /// The value of the second hex character of the opcode.
     /// </summary>
     public readonly uint X;
@@ -53,6 +58,7 @@ namespace Chip8
       LastDigitHex = Hex[3].ToString();
       NNN = Convert.ToUInt16($"0x{Hex.Substring(1)}",16);
       NN = Convert.ToByte($"0x{Hex.Substring(2)}", 16);
+      N = Convert.ToByte($"0x{Hex.Substring(3)}", 16);
       X = (uint) Convert.ToInt16($"0x{Hex.Substring(1, 1)}", 16);
       Y = (uint) Convert.ToInt16($"0x{Hex.Substring(2, 1)}", 16);
     }
