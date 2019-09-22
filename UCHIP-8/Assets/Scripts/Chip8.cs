@@ -511,14 +511,14 @@ namespace Chip8
       var baseAddress = I;
       for (var i = 0; i < n; i++)
       {
-        var x = (int) xUpperLeft + i;
-        x %= _screenWidth; // handle overflow
+        var y = (int) yUpperLeft + i;
+        y %= _screenWidth; // handle overflow
 
         var spriteLine = new BitArray( new[] {RAM[baseAddress + i]});
         for (var j = 0; j < spriteLine.Length; j++)
         {
-          var y = (int) yUpperLeft + j;
-          y %= _screenHeight; //handle overflow
+          var x = (int) xUpperLeft + j;
+          x %= _screenHeight; //handle overflow
 
           var color = spriteLine[j] ? Color.white : Color.black;
           OutputTexture.SetPixel(x, y, color);
