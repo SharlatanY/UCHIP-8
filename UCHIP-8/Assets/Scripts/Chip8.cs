@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
+using Random = System.Random;
 
 namespace Chip8
 {
@@ -36,6 +36,7 @@ namespace Chip8
     private float _tickReminder;
 
     //Misc
+    private readonly Random _random = new Random();
     private readonly Stack<ushort> _stack = new Stack<ushort>();
     private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
 
@@ -229,6 +230,15 @@ namespace Chip8
             SkipNextInstructionIfRegValNotEqualWithOtherRegVal(opCode.X, opCode.Y);
           else
             opCodeInvalid = true;
+          break;
+        case "A":
+          SetI(opCode.NNN);
+          break;
+        case "B":
+          JumpToAddressPlusV0(opCode.NNN);
+          break;
+        case "C":
+          OCCXNN(opCode.X, opCode.NN);
           break;
         default:
           opCodeInvalid = true;
@@ -438,6 +448,33 @@ namespace Chip8
     {
       if (V[registerIndex1] != V[registerIndex2])
         PC += 2;
+    }
+
+    /// <summary>
+    /// Sets the value of the I (memory address) register.
+    /// </summary>
+    /// <param name="value"></param>
+    private void SetI(ushort value)
+    {
+      I = value;
+    }
+
+    /// <summary>
+    /// Takes a memory address and sets the program counter to said address plus the value saved in register V[0]
+    /// </summary>
+    /// <param name="address"></param>
+    private void JumpToAddressPlusV0(ushort address)
+    {
+      PC = (ushort) (address + V[0]);
+    }
+
+    /// <summary>
+    /// Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN. 
+    /// </summary>
+    /// <param name=""></param>
+    public void OCCXNN(uint registerIndex, byte nn)
+    {
+      V[registerIndex] = (byte) (_random.Next(16) & nn);
     }
   }
 }
