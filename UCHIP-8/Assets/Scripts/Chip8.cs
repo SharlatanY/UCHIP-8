@@ -520,7 +520,7 @@ namespace Chip8
           var y = (int) yUpperLeft + j;
           y %= _screenHeight; //handle overflow
 
-          var color = spriteLine[j] == true ? Color.white : Color.black;
+          var color = spriteLine[j] ? Color.white : Color.black;
           OutputTexture.SetPixel(x, y, color);
           
 
