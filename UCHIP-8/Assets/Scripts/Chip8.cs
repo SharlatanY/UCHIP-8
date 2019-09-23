@@ -9,7 +9,9 @@ namespace Chip8
 {
   public class Chip8 : MonoBehaviour
   {
+    //Output
     public Texture2D OutputTexture; //Texture the chip 8 emulator will render to
+    private bool[,] _virtualScreen;
 
     //Registers
     private readonly byte[] V = new byte[16];
@@ -79,6 +81,8 @@ namespace Chip8
 
     private void Reset()
     {
+      _virtualScreen = new bool[_screenWidth, _screenHeight];
+
       InitializeRAM();
       PC = _pcStartingAddress;
       I = 0x0;
@@ -525,14 +529,18 @@ namespace Chip8
           //Since we draw from left to right and have big endianness though, we have to draw
           //the most significant bit first and then descend until we reach the least significant one.
           //That's why we use spriteLine[maxIndex -j]
-          var color = spriteLine[maxIndex -j] ? Color.white : Color.black;
-          OutputTexture.SetPixel(x, y, color);
-          
+          var oldPixelVal = _virtualScreen[x, y];
+          var newPixelVal = spriteLine[maxIndex - j];
 
-          //todo set "unset"-flag when appropriate
+          var color = newPixelVal ? Color.white : Color.black;
+          OutputTexture.SetPixel(x, y, color); //improvement idea: could first store all pixel changes in _virtualScreen, then set all pixels at once with OutputTexture.SetPixels(..) so we only have one call per sprite to set pixels on the texture
+
+          if (oldPixelVal == true && newPixelVal == false)
+            pixelUnset = true;
         }
 
         OutputTexture.Apply();
+        V[0xf] = (byte) (pixelUnset ? 1 : 0);
       }
     }
   }
