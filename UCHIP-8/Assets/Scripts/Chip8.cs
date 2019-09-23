@@ -515,12 +515,17 @@ namespace Chip8
         y %= _screenHeight; // handle overflow
 
         var spriteLine = new BitArray( new[] {RAM[baseAddress + i]});
-        for (var j = 0; j < spriteLine.Length; j++)
+        var maxIndex = spriteLine.Length - 1;
+        for (var j = 0; j <= maxIndex; j++)
         {
           var x = (int) xUpperLeft + j;
           x %= _screenWidth; //handle overflow
 
-          var color = spriteLine[j] ? Color.white : Color.black;
+          //The array created by BitArray() orders the bits from least to most significant bit.
+          //Since we draw from left to right and have big endianness though, we have to draw
+          //the most significant bit first and then descend until we reach the least significant one.
+          //That's why we use spriteLine[maxIndex -j]
+          var color = spriteLine[maxIndex -j] ? Color.white : Color.black;
           OutputTexture.SetPixel(x, y, color);
           
 
