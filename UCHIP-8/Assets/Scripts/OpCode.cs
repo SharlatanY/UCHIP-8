@@ -15,6 +15,11 @@ namespace Chip8
     public readonly string FirstDigitHex;
 
     /// <summary>
+    /// Last two digits of the opcode in hexadecimal. ATTENTION: Hex chars will be in upper case!
+    /// </summary>
+    public readonly string LastTwoDigitsHex;
+
+    /// <summary>
     /// Last digit of the opcode in hexadecimal. ATTENTION: Hex chars will be in upper case!
     /// </summary>
     public readonly string LastDigitHex;
@@ -55,6 +60,7 @@ namespace Chip8
       var bytes = new byte[] {leftByte, rightByte};
       Hex = BitConverter.ToString(bytes).Replace("-", string.Empty); ;
       FirstDigitHex = Hex[0].ToString();
+      LastTwoDigitsHex = Hex.Substring(2);
       LastDigitHex = Hex[3].ToString();
       NNN = Convert.ToUInt16($"0x{Hex.Substring(1)}",16);
       NN = Convert.ToByte($"0x{Hex.Substring(2)}", 16);

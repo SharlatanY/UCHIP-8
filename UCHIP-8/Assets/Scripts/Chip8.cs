@@ -214,10 +214,10 @@ namespace Chip8
               SetVxToVxXorVy(opCode.X, opCode.Y);
               break;
             case "4":
-              AddRegToOtherRegWithCarry(opCode.X, opCode.Y);
+              AddRegToOtherReg(opCode.X, opCode.Y);
               break;
             case "5":
-              SetVxToVxMinusVyWithBorrow(opCode.X, opCode.Y);
+              SetVxToVxMinusVy(opCode.X, opCode.Y);
               break;
             case "6":
               OC8XY6(opCode.X, opCode.Y);
@@ -251,6 +251,18 @@ namespace Chip8
           break;
         case "D":
           DrawSprite(opCode.X, opCode.Y, opCode.N);
+          break;
+        //todo e functions
+        case "F":
+          switch (opCode.LastTwoDigitsHex)
+          {
+            case "1E":
+              AddRegValToI(opCode.X);
+              break;
+            default:
+              opCodeInvalid = true;
+              break;
+          }
           break;
         default:
           opCodeInvalid = true;
@@ -397,7 +409,7 @@ namespace Chip8
     /// </summary>
     /// <param name="indexX"></param>
     /// <param name="indexY"></param>
-    private void AddRegToOtherRegWithCarry(uint indexX, uint indexY)
+    private void AddRegToOtherReg(uint indexX, uint indexY)
     {
       V[0xf] = (byte) (V[indexX] + V[indexY] > 0xff ? 1 : 0);
       V[indexX] += V[indexY];
@@ -408,7 +420,7 @@ namespace Chip8
     /// </summary>
     /// <param name="indexX"></param>
     /// <param name="indexY"></param>
-    private void SetVxToVxMinusVyWithBorrow(uint indexX, uint indexY)
+    private void SetVxToVxMinusVy(uint indexX, uint indexY)
     {
       V[0xf] = (byte) (V[indexX] > V[indexY] ? 1 : 0);
       V[indexX] -= V[indexY];
@@ -542,6 +554,19 @@ namespace Chip8
         OutputTexture.Apply();
         V[0xf] = (byte) (pixelUnset ? 1 : 0);
       }
+    }
+
+    //todo insert "E" and other "F" instruction functions here
+
+    /// <summary>
+    /// Adds the value stored in register V[<paramref name="registerIndex"/>] to value stored in address register I.
+    /// If an overflow occurs, V[0xF] will be set to 1, else to 0.
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    private void AddRegValToI(uint registerIndex)
+    {
+      V[0xF] = (byte) ((V[registerIndex] + I) > 0xFFFF ? 1 : 0);
+      I += V[registerIndex];
     }
   }
 }

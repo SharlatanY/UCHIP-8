@@ -19,6 +19,13 @@ namespace Tests
     }
 
     [Test]
+    public void LastTwoDigitsHex_Ok()
+    {
+      var opCode = new OpCode(0xb5, 0x24);
+      Assert.AreEqual("24", opCode.LastTwoDigitsHex);
+    }
+
+    [Test]
     public void LastDigitHex_Ok()
     {
       var opCode = new OpCode(0xb5, 0x24);
