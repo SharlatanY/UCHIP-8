@@ -4,3 +4,11 @@
 /UCHIP-8/.vs
 /UCHIP-8/Temp
 *.csproj
+UCHIP-8/Assets/StreamingAssets/BC_test.ch8
+UCHIP-8/Assets/StreamingAssets/BC_test.ch8.meta
+UCHIP-8/Assets/StreamingAssets/brix.ch8
+UCHIP-8/Assets/StreamingAssets/brix.ch8.meta
+UCHIP-8/Assets/StreamingAssets/pong.ch8
+UCHIP-8/Assets/StreamingAssets/pong.ch8.meta
+UCHIP-8/Assets/StreamingAssets/test_opcode.ch8
+UCHIP-8/Assets/StreamingAssets/test_opcode.ch8.meta

@@ -14,6 +14,13 @@ namespace Chip8
     //Output
     public AudioSource AudioSource;
     public Texture2D OutputTexture; //Texture the chip 8 emulator will render to
+
+    /// <summary>
+    /// If this is set to true, whenever a pixel would be drawn outside the screen (can only happen to the right and to the
+    /// bottom since the min index is 0 and the coordinate 0/0 is in the upper left corner), the pixel will be "wrapped around".
+    /// Example: max x index is 63 but pixel draw index is 64 -> pixel will be drawn at 0.
+    /// </summary>
+    private const bool DrawOverflowWrapAround = true;
     private bool[,] _virtualScreen;
 
     //Registers
@@ -28,9 +35,6 @@ namespace Chip8
     private ushort _pcStartingAddress = 0x200;
     private ushort PC; //stores current execution address
 
-    //Input
-    private bool _waitForKeyDown;
-
     //Tick/CPU speed/timers
     private byte _delayTimer;
 
@@ -38,6 +42,7 @@ namespace Chip8
     private const float DelayTimerClockInHz = 60;
     private float _instructionTickIntervalInS;
     private const float DelayTimerTickIntervalInS = 1 / DelayTimerClockInHz;
+    private const bool LegacyMode = true;
 
     /// <summary>
     /// Time reminder from last update call that wasn't enough for a "full tick".
@@ -54,7 +59,11 @@ namespace Chip8
     //Misc
     private readonly Random _random = new Random();
     private readonly Stack<ushort> _stack = new Stack<ushort>();
-    private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "rom.ch8");
+    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "rom.ch8");
+    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "BC_test.ch8");
+    private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "pong.ch8");
+    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "brix.ch8");
+    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "test_opcode.ch8");
 
     private int _screenWidth, _screenHeight;
 
@@ -112,8 +121,6 @@ namespace Chip8
       PC = _pcStartingAddress;
       I = 0x0;
 
-      _waitForKeyDown = false;
-
       _delayTimer = 0x0;
       _instructionTickIntervalInS = 1 / _clockInHz;
       _instructionTickReminder = 0;
@@ -169,7 +176,6 @@ namespace Chip8
       // read instruction
       var leftByte = RAM[PC];
       var rightByte = RAM[PC + 1];
-      //var uShortOpCode = (ushort)(leftByte << 8 | rightByte);
       var opCode = new OpCode(leftByte, rightByte);
 
       // move program counter to next instruction to be executed on next tick (might be overriden if instruction turns out to be a jump or function call)
@@ -177,10 +183,6 @@ namespace Chip8
 
       // execute instruction
       ExecuteOpCode(opCode);
-
-      //OutputTexture.SetPixel(0, 0, Color.white);
-      //OutputTexture.Apply();
-      //throw new NotImplementedException();
     }
 
     private void ExecuteOpCode(OpCode opCode)
@@ -376,7 +378,8 @@ namespace Chip8
     /// </summary>
     private void ReturnFromSubroutine()
     {
-      PC = (ushort)(_stack.Pop() + 2); // +2 because the PC needs to be set to the next instruction after the original call to the subroutine. Else, the subroutine would be called again in the next tick.
+      //no need to increase program counter after pop because on push, when address to return to is stored from PC, PC has already been increased
+      PC = (ushort)(_stack.Pop());
     }
 
     /// <summary>
@@ -503,8 +506,16 @@ namespace Chip8
     /// </summary>
     private void OC8XY6(uint indexX, uint indexY)
     {
-      V[0xf] = (byte)(V[indexY] & 0x1);
-      V[indexX] = (byte)(V[indexY] >> 1);
+      if (LegacyMode)
+      {
+        V[0xf] = (byte)(V[indexY] & 0x1);
+        V[indexX] = (byte)(V[indexY] >> 1);
+      }
+      else
+      {
+        V[0xf] = (byte)(V[indexX] & 0x1);
+        V[indexX] = (byte)(V[indexX] >> 1);
+      }
     }
 
     /// <summary>
@@ -527,8 +538,16 @@ namespace Chip8
     /// </summary>
     private void OC8XYE(uint indexX, uint indexY)
     {
-      V[0xf] = (byte)(V[indexY] & 0x80);
-      V[indexX] = (byte)(V[indexY] << 1);
+      if (LegacyMode)
+      {
+        V[0xf] = (byte)((V[indexY] & 0x80) >> 7);
+        V[indexX] = (byte)(V[indexY] << 1);
+      }
+      else
+      {
+        V[0xf] = (byte)((V[indexX] & 0x80) >> 7);
+        V[indexX] = (byte)(V[indexX] << 1);
+      }
     }
 
     /// <summary>
@@ -570,53 +589,58 @@ namespace Chip8
     }
 
     /// <summary>
-    /// Draws a sprite at coordinate (V[x], V[y]) that has a width of 8 pixels and a height of n pixels.
+    /// Draws a sprite at coordinate (V[registerIndexX], V[registerIndexY]) that has a width of 8 pixels and a height of n pixels.
     /// To get the sprite rows, n bytes of data are read starting from memory address stored in register I;
     /// If any set pixels are unset by this operation, V[F] is set to 1, else it will be set to 0.
-    /// If a sprite would draw one or more pixels outside the screen, they will be wrapped around (all coordinates
-    /// will be modified with "% _screenWidth" or "% _screenHeight" respectively.
     /// </summary>
-    /// <param name="xUpperLeft"></param>
-    /// <param name="yUpperLeft"></param>
+    /// <param name="registerIndexX"></param>
+    /// <param name="registerIndexY"></param>
     /// <param name="n"></param>
-    private void DrawSprite(uint xUpperLeft, uint yUpperLeft, byte n)
+    private void DrawSprite(uint registerIndexX, uint registerIndexY, byte n)
     {
       // this method is written very inefficiently and could use a lot of optimization
       // since it's just a small side project/proof of concept, I'll leave it as is as
-      // to not invest time in something that isn't needed.
+      var xUpperLeft = (uint)V[registerIndexX];
+      var yUpperLeft = (uint)V[registerIndexY];
 
-      // handling of underflow not necessary because the data types and implementation ensure that we'll always only have values >= 0
-
-      // handle potential overflows for start drawing location
-      xUpperLeft %= (uint)_screenWidth;
-      yUpperLeft %= (uint)_screenHeight;
+      if (DrawOverflowWrapAround)
+      {
+        // handle potential overflows for start drawing location
+        xUpperLeft %= (uint)_screenWidth;
+        yUpperLeft %= (uint)_screenHeight;
+      }
+      
 
       var pixelUnset = false;
       var baseAddress = I;
       for (var i = 0; i < n; i++)
       {
         var y = (int)yUpperLeft + i;
-        y %= _screenHeight; // handle overflow
 
         var spriteLine = new BitArray(new[] { RAM[baseAddress + i] });
         var maxIndex = spriteLine.Length - 1;
         for (var j = 0; j <= maxIndex; j++)
         {
           var x = (int)xUpperLeft + j;
-          x %= _screenWidth; //handle overflow
+          if(DrawOverflowWrapAround)
+            x %= _screenWidth; //handle overflow
 
-          //The array created by BitArray() orders the bits from least to most significant bit.
-          //Since we draw from left to right and have big endianness though, we have to draw
-          //the most significant bit first and then descend until we reach the least significant one.
-          //That's why we use spriteLine[maxIndex -j]
-          var oldPixelVal = _virtualScreen[x, y];
-          var newPixelVal = spriteLine[maxIndex - j];
+          if (x < _screenWidth && y < _screenHeight) //can only happen if draw wrapp around is not activated
+          {
+            //The array created by BitArray() orders the bits from least to most significant bit.
+            //Since we draw from left to right and have big endianness though, we have to draw
+            //the most significant bit first and then descend until we reach the least significant one.
+            //That's why we use spriteLine[maxIndex -j]
+            var oldPixelVal = _virtualScreen[x, y];
+            var newPixelVal = spriteLine[maxIndex - j] ^ oldPixelVal;
+            _virtualScreen[x, y] = newPixelVal;
 
-          var color = newPixelVal ? Color.white : Color.black;
-          OutputTexture.SetPixel(x, y, color); //improvement idea: could first store all pixel changes in _virtualScreen, then set all pixels at once with OutputTexture.SetPixels(..) so we only have one call per sprite to set pixels on the texture
+            var color = newPixelVal ? Color.white : Color.black;
+            OutputTexture.SetPixel(x, y, color); //improvement idea: could first store all pixel changes in _virtualScreen, then set all pixels at once with OutputTexture.SetPixels(..) so we only have one call per sprite to set pixels on the texture
 
-          if (oldPixelVal == true && newPixelVal == false)
-            pixelUnset = true;
+            if (oldPixelVal == true && newPixelVal == false)
+              pixelUnset = true;
+          }
         }
 
         OutputTexture.Apply();
@@ -743,7 +767,7 @@ namespace Chip8
     /// <param name="maxRegisterIndex"></param>
     private void WriteRegsToMemory(uint maxRegisterIndex)
     {
-      for (var i = 0; i < maxRegisterIndex; i++)
+      for (var i = 0; i <= maxRegisterIndex; i++)
         RAM[I + i] = V[i];
 
       //potential bug: some documentations say that I should be set to I + registerIndex + 1 at the end of the operations, others say I should NOT be modified.
@@ -757,9 +781,10 @@ namespace Chip8
     /// <param name="maxRegisterIndex"></param>
     private void WriteMemoryToRegs(uint maxRegisterIndex)
     {
-      for (var i = 0; i < maxRegisterIndex; i++)
+      for (var i = 0; i <= maxRegisterIndex; i++)
         V[i] = RAM[I + i];
 
+      //I = (ushort) (I + maxRegisterIndex + 1);
       //potential bug: some documentations say that I should be set to I + registerIndex + 1 at the end of the operations, others say I should NOT be modified.
       //since more sources seem to indicate it should not be modified, I'm going with that
     }
