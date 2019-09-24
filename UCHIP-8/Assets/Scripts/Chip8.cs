@@ -84,7 +84,7 @@ namespace Chip8
         var numToSubtractFromDelay = (int)(passedTime / DelayTimerTickIntervalInS);
         _delayTimerTickReminder = passedTime % DelayTimerTickIntervalInS;
 
-        _delayTimer = (byte) (_delayTimer - numToSubtractFromDelay < 0 ? 0 : _delayTimer - numToSubtractFromDelay);
+        _delayTimer = (byte)(_delayTimer - numToSubtractFromDelay < 0 ? 0 : _delayTimer - numToSubtractFromDelay);
       }
 
       //calculate how many ticks to execute
@@ -262,7 +262,7 @@ namespace Chip8
               break;
           }
           break;
-          #endregion
+        #endregion
         case "9":
           if (opCode.LastDigitHex == "0")
             SkipNextInstructionIfRegValNotEqualWithOtherRegVal(opCode.X, opCode.Y);
@@ -296,6 +296,7 @@ namespace Chip8
           }
           break;
         case "F":
+          #region handle case F
           switch (opCode.LastTwoDigitsHex)
           {
             case "07":
@@ -313,11 +314,24 @@ namespace Chip8
             case "1E":
               AddRegValToI(opCode.X);
               break;
+            case "29":
+              SetIToCharacterSpriteAddress(opCode.X);
+              break;
+            case "33":
+              OCFX33(opCode.X);
+              break;
+            case "55":
+              WriteRegsToMemory(opCode.X);
+              break;
+            case "65":
+              WriteMemoryToRegs(opCode.X);
+              break;
             default:
               opCodeInvalid = true;
               break;
           }
           break;
+        #endregion
         default:
           opCodeInvalid = true;
           break;
@@ -325,7 +339,7 @@ namespace Chip8
 
       if (opCodeInvalid)
       {
-        throw new ArgumentException($"Invalid OpCode: '{opCode.Hex}' at address {PC-2}", nameof(opCode)); //need to reduce PC by two to get actual address because PC was already directly set to address that will have to be read next
+        throw new ArgumentException($"Invalid OpCode: '{opCode.Hex}' at address {PC - 2}", nameof(opCode)); //need to reduce PC by two to get actual address because PC was already directly set to address that will have to be read next
       }
     }
 
@@ -436,7 +450,7 @@ namespace Chip8
     /// <param name="indexY">Index V[y]</param>
     private void SetVxToVxOrVy(uint indexX, uint indexY)
     {
-      V[indexX] = (byte) (V[indexX] | V[indexY]);
+      V[indexX] = (byte)(V[indexX] | V[indexY]);
     }
 
     /// <summary>
@@ -446,7 +460,7 @@ namespace Chip8
     /// <param name="indexY">Index V[y]</param>
     private void SetVxToVxAndVy(uint indexX, uint indexY)
     {
-      V[indexX] = (byte) (V[indexX] & V[indexY]);
+      V[indexX] = (byte)(V[indexX] & V[indexY]);
     }
     /// <summary>
     /// Register value V[x] is set to result of bitwise XOR of V[x] and V[y]
@@ -455,7 +469,7 @@ namespace Chip8
     /// <param name="indexY">Index V[y]</param>
     private void SetVxToVxXorVy(uint indexX, uint indexY)
     {
-      V[indexX] = (byte) (V[indexX] ^ V[indexY]);
+      V[indexX] = (byte)(V[indexX] ^ V[indexY]);
     }
 
     /// <summary>
@@ -465,7 +479,7 @@ namespace Chip8
     /// <param name="indexY"></param>
     private void AddRegToOtherReg(uint indexX, uint indexY)
     {
-      V[0xf] = (byte) (V[indexX] + V[indexY] > 0xff ? 1 : 0);
+      V[0xf] = (byte)(V[indexX] + V[indexY] > 0xff ? 1 : 0);
       V[indexX] += V[indexY];
     }
 
@@ -476,7 +490,7 @@ namespace Chip8
     /// <param name="indexY"></param>
     private void SetVxToVxMinusVy(uint indexX, uint indexY)
     {
-      V[0xf] = (byte) (V[indexX] > V[indexY] ? 1 : 0);
+      V[0xf] = (byte)(V[indexX] > V[indexY] ? 1 : 0);
       V[indexX] -= V[indexY];
     }
 
@@ -490,7 +504,7 @@ namespace Chip8
     private void OC8XY6(uint indexX, uint indexY)
     {
       V[0xf] = (byte)(V[indexY] & 0x1);
-      V[indexX] = (byte) (V[indexY] >> 1);
+      V[indexX] = (byte)(V[indexY] >> 1);
     }
 
     /// <summary>
@@ -543,7 +557,7 @@ namespace Chip8
     /// <param name="address"></param>
     private void JumpToAddressPlusV0(ushort address)
     {
-      PC = (ushort) (address + V[0]);
+      PC = (ushort)(address + V[0]);
     }
 
     /// <summary>
@@ -552,7 +566,7 @@ namespace Chip8
     /// <param name=""></param>
     private void OCCXNN(uint registerIndex, byte nn)
     {
-      V[registerIndex] = (byte) (_random.Next(16) & nn);
+      V[registerIndex] = (byte)(_random.Next(16) & nn);
     }
 
     /// <summary>
@@ -575,20 +589,20 @@ namespace Chip8
 
       // handle potential overflows for start drawing location
       xUpperLeft %= (uint)_screenWidth;
-      yUpperLeft %= (uint) _screenHeight;
+      yUpperLeft %= (uint)_screenHeight;
 
       var pixelUnset = false;
       var baseAddress = I;
       for (var i = 0; i < n; i++)
       {
-        var y = (int) yUpperLeft + i;
+        var y = (int)yUpperLeft + i;
         y %= _screenHeight; // handle overflow
 
-        var spriteLine = new BitArray( new[] {RAM[baseAddress + i]});
+        var spriteLine = new BitArray(new[] { RAM[baseAddress + i] });
         var maxIndex = spriteLine.Length - 1;
         for (var j = 0; j <= maxIndex; j++)
         {
-          var x = (int) xUpperLeft + j;
+          var x = (int)xUpperLeft + j;
           x %= _screenWidth; //handle overflow
 
           //The array created by BitArray() orders the bits from least to most significant bit.
@@ -606,7 +620,7 @@ namespace Chip8
         }
 
         OutputTexture.Apply();
-        V[0xf] = (byte) (pixelUnset ? 1 : 0);
+        V[0xf] = (byte)(pixelUnset ? 1 : 0);
       }
     }
 
@@ -662,7 +676,7 @@ namespace Chip8
       else
       {
         //Still waiting for any key do be pressed down. Set PC back so this instruction will be executed again in the next tick.
-        PC -= 2; 
+        PC -= 2;
       }
     }
 
@@ -698,6 +712,59 @@ namespace Chip8
     }
 
     /// <summary>
+    /// Sets the value of address register I to the address off the sprite for the hex character stored in register V[registerIndex]
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    private void SetIToCharacterSpriteAddress(uint registerIndex)
+    {
+      var charNumber = V[registerIndex];
+
+      I = (ushort)(FontStartingAddress + charNumber * 5); //*5 because every character sprite is made up out of 5 bytes.
+    }
+
+    /// <summary>
+    /// Stores the binary-coded decimal representation of V[registerIndex], with the most significant of three digits at the address in I, 
+    /// the middle digit at I plus 1, and the least significant digit at I plus 2. (In other words, take the decimal representation of VX, 
+    /// place the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2.) 
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    private void OCFX33(uint registerIndex)
+    {
+      var valToEncode = V[registerIndex];
+      RAM[I] = (byte)((valToEncode / 100) % 10);
+      RAM[I + 1] = (byte)((valToEncode / 10) % 10);
+      RAM[I + 2] = (byte)(valToEncode % 10);
+    }
+
+    /// <summary>
+    /// Write all register values from register V[0] to (including) V[registerIndex] starting at address stored in address register I.
+    /// I won't be modified.
+    /// </summary>
+    /// <param name="maxRegisterIndex"></param>
+    private void WriteRegsToMemory(uint maxRegisterIndex)
+    {
+      for (var i = 0; i < maxRegisterIndex; i++)
+        RAM[I + i] = V[i];
+
+      //potential bug: some documentations say that I should be set to I + registerIndex + 1 at the end of the operations, others say I should NOT be modified.
+      //since more sources seem to indicate it should not be modified, I'm going with that
+    }
+
+    /// <summary>
+    /// Fills registers V[0] to (including) V[registerIndex] with RAM data starting at address stored in address register I.
+    /// I won't be modified.
+    /// </summary>
+    /// <param name="maxRegisterIndex"></param>
+    private void WriteMemoryToRegs(uint maxRegisterIndex)
+    {
+      for (var i = 0; i < maxRegisterIndex; i++)
+        V[i] = RAM[I + i];
+
+      //potential bug: some documentations say that I should be set to I + registerIndex + 1 at the end of the operations, others say I should NOT be modified.
+      //since more sources seem to indicate it should not be modified, I'm going with that
+    }
+
+    /// <summary>
     /// Returns all keys that have been pressed down since the last update() call (= exclude keys that have already been pressed down for a longer time).
     /// </summary>
     /// <returns></returns>
@@ -706,7 +773,7 @@ namespace Chip8
       var newlyPressedKeys = new List<string>();
       foreach (var key in Chip8Constants.AvailableKeys)
       {
-        if(Input.GetButtonDown(key))
+        if (Input.GetButtonDown(key))
           newlyPressedKeys.Add(key);
       }
 
