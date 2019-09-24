@@ -26,9 +26,14 @@ namespace Chip8
     private ushort _pcStartingAddress = 0x200;
     private ushort PC; //stores current execution address
 
-    //Tick/CPU speed
+    //Tick/CPU speed/timers
+    private byte _delay;
+
     private float _clockInHz = 500;
-    private float _tickIntervalInS;
+    private const float DelayTimerClockInHz = 60;
+    private float _instructionTickIntervalInS;
+    private const float DelayTimerTickIntervalInS = 1 / DelayTimerClockInHz;
+
     /// <summary>
     /// Time reminder from last update call that wasn't enough for a "full tick".
     /// Example: Tick time is 3ms and between two Update() calls, 7ms pass.
@@ -37,7 +42,9 @@ namespace Chip8
     /// -> passed time is 6ms, two ticks are executed.
     /// This way, we get more consistent speed
     /// </summary>
-    private float _tickReminder;
+    private float _instructionTickReminder;
+
+    private float _delayTimerTickReminder;
 
     //Misc
     private readonly Random _random = new Random();
@@ -63,10 +70,22 @@ namespace Chip8
 
     private void Update()
     {
+      float passedTime;
+
+      //update delay timer
+      if (_delay > 0)
+      {
+        passedTime = Time.deltaTime + _delayTimerTickReminder;
+        var numToSubtractFromDelay = (int)(passedTime / DelayTimerTickIntervalInS);
+        _delayTimerTickReminder = passedTime % DelayTimerTickIntervalInS;
+
+        _delay = (byte) (_delay - numToSubtractFromDelay < 0 ? 0 : _delay - numToSubtractFromDelay);
+      }
+
       //calculate how many ticks to execute
-      var passedTime = Time.deltaTime + _tickReminder;
-      var numTicksToExecute = (int)(passedTime / _tickIntervalInS);
-      _tickReminder = passedTime % _tickIntervalInS;
+      passedTime = Time.deltaTime + _instructionTickReminder;
+      var numTicksToExecute = (int)(passedTime / _instructionTickIntervalInS);
+      _instructionTickReminder = passedTime % _instructionTickIntervalInS;
 
       //execute instructions
       for (var i = 0; i < numTicksToExecute; i++)
@@ -88,8 +107,10 @@ namespace Chip8
       PC = _pcStartingAddress;
       I = 0x0;
 
-      _tickIntervalInS = 1 / _clockInHz;
-      _tickReminder = 0;
+      _delay = 0x0;
+      _instructionTickIntervalInS = 1 / _clockInHz;
+      _instructionTickReminder = 0;
+      _delayTimerTickReminder = 0;
 
       _stack.Clear();
 
