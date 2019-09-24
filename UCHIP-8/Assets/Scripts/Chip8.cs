@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityUtilities.GlobalHelpers.Paths;
 using Random = System.Random;
 
 namespace Chip8
@@ -41,7 +42,7 @@ namespace Chip8
     //Misc
     private readonly Random _random = new Random();
     private readonly Stack<ushort> _stack = new Stack<ushort>();
-    private const string ROMPath = "Assets//StreamingAssets//rom.ch8";
+    private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "rom.ch8");
 
     private int _screenWidth, _screenHeight;
 
@@ -128,7 +129,7 @@ namespace Chip8
     /// <param name="startingAddress">Address at which first byte will be written</param>
     private void WriteROMIntoRAM(ushort startingAddress)
     {
-      var binary = File.ReadAllBytes(ROMPath);
+      var binary = File.ReadAllBytes(_romPath);
       Array.Copy(binary, 0, RAM, startingAddress, binary.Length);
     }
 
