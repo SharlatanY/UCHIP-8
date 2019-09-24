@@ -12,6 +12,7 @@ namespace Chip8
   public class Chip8 : MonoBehaviour
   {
     //Output
+    public AudioSource AudioSource;
     public Texture2D OutputTexture; //Texture the chip 8 emulator will render to
     private bool[,] _virtualScreen;
 
@@ -305,6 +306,9 @@ namespace Chip8
               break;
             case "15":
               SetDelayTimerToReg(opCode.X);
+              break;
+            case "18":
+              PlaySound(opCode.X);
               break;
             case "1E":
               AddRegValToI(opCode.X);
@@ -658,7 +662,6 @@ namespace Chip8
       else
       {
         //Still waiting for any key do be pressed down. Set PC back so this instruction will be executed again in the next tick.
-        //potential bug: it wasn't clearly
         PC -= 2; 
       }
     }
@@ -672,6 +675,16 @@ namespace Chip8
       _delayTimer = V[registerIndex];
     }
 
+    /// <summary>
+    /// Plays a sound for "1/60 * V[registerIndex]" seconds
+    /// </summary>
+    private void PlaySound(uint registerIndex)
+    {
+      var playDuration = 1f / 60f * V[registerIndex];
+      AudioSource.time = 0;
+      AudioSource.Play();
+      AudioSource.SetScheduledEndTime(AudioSettings.dspTime + playDuration);
+    }
 
     /// <summary>
     /// Adds the value stored in register V[<paramref name="registerIndex"/>] to value stored in address register I.
