@@ -253,7 +253,20 @@ namespace Chip8
         case "D":
           DrawSprite(opCode.X, opCode.Y, opCode.N);
           break;
-        //todo e functions
+        case "E":
+          switch (opCode.LastTwoDigitsHex)
+          {
+            case "9E":
+              SkipIfKeyDown(opCode.X);
+              break;
+            case "A1":
+              SkipIfKeyNotDown(opCode.X);
+              break;
+            default:
+              opCodeInvalid = true;
+              break;
+          }
+          break;
         case "F":
           switch (opCode.LastTwoDigitsHex)
           {
@@ -557,7 +570,31 @@ namespace Chip8
       }
     }
 
-    //todo insert "E" and other "F" instruction functions here
+    /// <summary>
+    /// Skips the next instruction if key stored in register V[registerIndex] is currently pressed.
+    /// </summary>
+    /// <param name="registerIndex">Key code in hex.</param>
+    private void SkipIfKeyDown(uint registerIndex)
+    {
+      var key = V[registerIndex].ToString("X");
+      //potential bug? because this returns true as long as the button is pressed, so, when we execute multiple ticks in short succession that all check for a certain button, the press might be registered for all of them.
+      //but that's what was in the specification I found...
+      if (Input.GetButton(key.ToUpper()))
+        PC += 2;
+    }
+
+    /// <summary>
+    /// Skips the next instruction if key stored in register V[registerIndex] is currently NOT pressed.
+    /// </summary>
+    /// <param name="registerIndex">Key code in hex.</param>
+    private void SkipIfKeyNotDown(uint registerIndex)
+    {
+      var key = V[registerIndex].ToString("X");
+      //potential bug? because this returns true as long as the button is pressed, so, when we execute multiple ticks in short succession that all check for a certain button, the press might be registered for all of them.
+      //but that's what was in the specification I found...
+      if (!Input.GetButton(key.ToUpper()))
+        PC += 2;
+    }
 
     /// <summary>
     /// Adds the value stored in register V[<paramref name="registerIndex"/>] to value stored in address register I.
