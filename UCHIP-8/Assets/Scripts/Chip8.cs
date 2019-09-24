@@ -498,11 +498,16 @@ namespace Chip8
     }
 
     /// <summary>
+    /// Legacy Mode:
     /// Store the value of register VY shifted right one bit in register VX
-    /// Set register V[0xF] to the least significant bit prior to the shift.
-    /// ATTENTION: There are different implementations for this method.
-    /// Using my interpretation (the description there is ambiguous itself) of the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)!
-    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
+    /// Set register V[0xF] to the least significant bit of VY.
+    /// Modern Mode:
+    /// Store the value of register VX shifted right one bit in register VX
+    /// Set register V[0xF] to the least significant bit of VX prior to the shift.
+    /// Attention:
+    /// ATTENTION: There are different documentations and implementations out there for this method.
+    /// Depending on <see cref="LegacyMode"/>, different code will be executed when calling this function
+    /// Some games (most newer games, in fact) probably won't work with the legacy implementation and vice versa. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
     /// </summary>
     private void OC8XY6(uint indexX, uint indexY)
     {
@@ -530,11 +535,15 @@ namespace Chip8
     }
 
     /// <summary>
+    /// Legacy Mode:
     /// Store the value of register VY shifted left one bit in register VX
-    /// Set register V[0xF] to the most significant bit prior to the shift.
+    /// Set register V[0xF] to the most significant bit of VY
+    /// Modern Mode:
+    /// Store the value of register VX shifted left one bit in register VX
+    /// Set register V[0xF] to the most significant bit of VX prior to the shift.
     /// ATTENTION: There are different implementations for this method, just like with 8XY6.
-    /// Using my interpretation (the description there is ambiguous itself) of the one suggested by "mastering chip-8" (http://mattmik.com/files/chip8/mastering/chip8.html)!
-    /// Some games (most newer games, in fact) probably won't work with this implementation. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
+    /// Depending on <see cref="LegacyMode"/>, different code will be executed when calling this function
+    /// Some games (most newer games, in fact) probably won't work with the legacy implementation and vice versa. See discussions here: https://www.reddit.com/r/EmuDev/comments/8cbvz6/chip8_8xy6/, (https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/)
     /// </summary>
     private void OC8XYE(uint indexX, uint indexY)
     {
@@ -592,6 +601,8 @@ namespace Chip8
     /// Draws a sprite at coordinate (V[registerIndexX], V[registerIndexY]) that has a width of 8 pixels and a height of n pixels.
     /// To get the sprite rows, n bytes of data are read starting from memory address stored in register I;
     /// If any set pixels are unset by this operation, V[F] is set to 1, else it will be set to 0.
+    /// If <see cref="DrawOverflowWrapAround"/> is set to true, any pixels that would be drawn outside the screen will be wrapped
+    /// around. If it is set to false, they simply won't be drawn at all.
     /// </summary>
     /// <param name="registerIndexX"></param>
     /// <param name="registerIndexY"></param>
