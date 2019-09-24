@@ -57,8 +57,8 @@ namespace Chip8
     /// <param name="rightByte"></param>
     public OpCode(byte leftByte, byte rightByte)
     {
-      var bytes = new byte[] {leftByte, rightByte};
-      Hex = BitConverter.ToString(bytes).Replace("-", string.Empty); ;
+      var bytes = new[] {leftByte, rightByte};
+      Hex = BitConverter.ToString(bytes).Replace("-", string.Empty);
       FirstDigitHex = Hex[0].ToString();
       LastTwoDigitsHex = Hex.Substring(2);
       LastDigitHex = Hex[3].ToString();

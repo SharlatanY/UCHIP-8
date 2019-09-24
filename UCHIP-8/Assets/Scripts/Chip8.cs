@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityUtilities.GlobalHelpers.Paths;
 using Random = System.Random;
@@ -26,8 +27,11 @@ namespace Chip8
     private ushort _pcStartingAddress = 0x200;
     private ushort PC; //stores current execution address
 
+    //Input
+    private bool _waitForKeyDown;
+
     //Tick/CPU speed/timers
-    private byte _delay;
+    private byte _delayTimer;
 
     private float _clockInHz = 500;
     private const float DelayTimerClockInHz = 60;
@@ -73,13 +77,13 @@ namespace Chip8
       float passedTime;
 
       //update delay timer
-      if (_delay > 0)
+      if (_delayTimer > 0)
       {
         passedTime = Time.deltaTime + _delayTimerTickReminder;
         var numToSubtractFromDelay = (int)(passedTime / DelayTimerTickIntervalInS);
         _delayTimerTickReminder = passedTime % DelayTimerTickIntervalInS;
 
-        _delay = (byte) (_delay - numToSubtractFromDelay < 0 ? 0 : _delay - numToSubtractFromDelay);
+        _delayTimer = (byte) (_delayTimer - numToSubtractFromDelay < 0 ? 0 : _delayTimer - numToSubtractFromDelay);
       }
 
       //calculate how many ticks to execute
@@ -107,7 +111,9 @@ namespace Chip8
       PC = _pcStartingAddress;
       I = 0x0;
 
-      _delay = 0x0;
+      _waitForKeyDown = false;
+
+      _delayTimer = 0x0;
       _instructionTickIntervalInS = 1 / _clockInHz;
       _instructionTickReminder = 0;
       _delayTimerTickReminder = 0;
@@ -278,10 +284,10 @@ namespace Chip8
           switch (opCode.LastTwoDigitsHex)
           {
             case "9E":
-              SkipIfKeyDown(opCode.X);
+              SkipIfKeyPressed(opCode.X);
               break;
             case "A1":
-              SkipIfKeyNotDown(opCode.X);
+              SkipIfKeyNotPressed(opCode.X);
               break;
             default:
               opCodeInvalid = true;
@@ -291,6 +297,15 @@ namespace Chip8
         case "F":
           switch (opCode.LastTwoDigitsHex)
           {
+            case "07":
+              SetRegToDelayTimer(opCode.X);
+              break;
+            case "0A":
+              WaitForKeyDownAndStoreInReg(opCode.X);
+              break;
+            case "15":
+              SetDelayTimerToReg(opCode.X);
+              break;
             case "1E":
               AddRegValToI(opCode.X);
               break;
@@ -595,7 +610,7 @@ namespace Chip8
     /// Skips the next instruction if key stored in register V[registerIndex] is currently pressed.
     /// </summary>
     /// <param name="registerIndex">Key code in hex.</param>
-    private void SkipIfKeyDown(uint registerIndex)
+    private void SkipIfKeyPressed(uint registerIndex)
     {
       var key = V[registerIndex].ToString("X");
       //potential bug? because this returns true as long as the button is pressed, so, when we execute multiple ticks in short succession that all check for a certain button, the press might be registered for all of them.
@@ -608,7 +623,7 @@ namespace Chip8
     /// Skips the next instruction if key stored in register V[registerIndex] is currently NOT pressed.
     /// </summary>
     /// <param name="registerIndex">Key code in hex.</param>
-    private void SkipIfKeyNotDown(uint registerIndex)
+    private void SkipIfKeyNotPressed(uint registerIndex)
     {
       var key = V[registerIndex].ToString("X");
       //potential bug? because this returns true as long as the button is pressed, so, when we execute multiple ticks in short succession that all check for a certain button, the press might be registered for all of them.
@@ -618,14 +633,71 @@ namespace Chip8
     }
 
     /// <summary>
+    /// Sets the value of register V[registerIndex] to the current delay timer value
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    private void SetRegToDelayTimer(uint registerIndex)
+    {
+      V[registerIndex] = _delayTimer;
+    }
+
+    /// <summary>
+    /// Waits for a key to be pressed down and stores the key in register V[registerIndex].
+    /// Until a key is pressed down, no other instructions will be executed.
+    /// </summary>
+    //potential bug 1: might also be that this should check for "key pressed" instead of "key down". Documentation unclear
+    //potential bug 2: I didn't find a place that explicitly stated of timers like the delay timer should be paused as well. Major consensus in forums etc. seems to be "probably" not. 
+    private void WaitForKeyDownAndStoreInReg(uint registerIndex)
+    {
+      var pressedKeys = GetKeysJustPressed();
+      if (pressedKeys.Any())
+      {
+        var key = pressedKeys.First();
+        V[registerIndex] = Convert.ToByte(Convert.ToByte($"0x{key}", 16));
+      }
+      else
+      {
+        //Still waiting for any key do be pressed down. Set PC back so this instruction will be executed again in the next tick.
+        //potential bug: it wasn't clearly
+        PC -= 2; 
+      }
+    }
+
+    /// <summary>
+    /// Sets the value of the delay timer to the value stored in register V[registerIndex]
+    /// </summary>
+    /// <param name="registerIndex"></param>
+    private void SetDelayTimerToReg(uint registerIndex)
+    {
+      _delayTimer = V[registerIndex];
+    }
+
+
+    /// <summary>
     /// Adds the value stored in register V[<paramref name="registerIndex"/>] to value stored in address register I.
     /// If an overflow occurs, V[0xF] will be set to 1, else to 0.
     /// </summary>
     /// <param name="registerIndex"></param>
     private void AddRegValToI(uint registerIndex)
     {
-      V[0xF] = (byte) ((V[registerIndex] + I) > 0xFFFF ? 1 : 0);
+      V[0xF] = (byte)((V[registerIndex] + I) > 0xFFFF ? 1 : 0);
       I += V[registerIndex];
+    }
+
+    /// <summary>
+    /// Returns all keys that have been pressed down since the last update() call (= exclude keys that have already been pressed down for a longer time).
+    /// </summary>
+    /// <returns></returns>
+    private string[] GetKeysJustPressed()
+    {
+      var newlyPressedKeys = new List<string>();
+      foreach (var key in Chip8Constants.AvailableKeys)
+      {
+        if(Input.GetButtonDown(key))
+          newlyPressedKeys.Add(key);
+      }
+
+      return newlyPressedKeys.ToArray();
     }
   }
 }

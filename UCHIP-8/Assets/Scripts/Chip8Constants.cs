@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Chip8
 {
@@ -28,5 +29,7 @@ namespace Chip8
       0xf0, 0x80, 0xf0, 0x80, 0xf0, // E
       0xf0, 0x80, 0xf0, 0x80, 0x80  // F
     };
+
+    public static readonly string[] AvailableKeys = "0123456789ABCDEF".ToArray().Select(c => c.ToString()).ToArray();
   }
 }
