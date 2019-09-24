@@ -59,9 +59,9 @@ namespace Chip8
     //Misc
     private readonly Random _random = new Random();
     private readonly Stack<ushort> _stack = new Stack<ushort>();
-    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "rom.ch8");
+    private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "rom.ch8");
     //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "BC_test.ch8");
-    private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "pong.ch8");
+    //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "pong.ch8");
     //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "brix.ch8");
     //private string _romPath = Path.Combine(GlobalPaths.FixedStreamingAssetPath, "test_opcode.ch8");
 
