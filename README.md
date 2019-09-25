@@ -10,9 +10,11 @@ FAQ
 ---
 **Q:** How do I configure the controls?
 **A:** Controls can be configured at the start screen. What game uses which buttons in the end is up to the game.
+
 The standard buttons used for the game coming with the emulator (Brix) are "Q" and "E"
 
 **Q:** How do I reset the game?
+
 **A:** Unfortunately, you currently have to close and restart the program.
 
 Known Issues
@@ -29,7 +31,7 @@ Since a lot of newer games also rely on newer implementations of those opcodes, 
 
 Affected opcodes, as far as I could gather, are:
 
- - 8XY6 (new version implemented as wellbut disabled)
+ - 8XY6 (new version implemented as well but disabled)
  - 8XYE (new version implemented as well but disabled)
  - FX55
  - FX65
